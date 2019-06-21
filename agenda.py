@@ -18,27 +18,9 @@ FAZER = 'f'
 PRIORIZAR = 'p'
 LISTAR = 'l'
 
-# Imprime texto com cores. Por exemplo, para imprimir "Oi mundo!" em vermelho, basta usar
-#
-# printCores('Oi mundo!', RED)
-# printCores('Texto amarelo e negrito', YELLOW + BOLD)
 
 def printCores(texto, cor) :
   print(cor + texto + RESET)
-  
-
-# Adiciona um compromisso aa agenda. Um compromisso tem no minimo
-# uma descrição. Adicionalmente, pode ter, em caráter opcional, uma
-# data (formato DDMMAAAA), um horário (formato HHMM), uma prioridade de A a Z, 
-# um contexto onde a atividade será realizada (precedido pelo caractere
-# '@') e um projeto do qual faz parte (precedido pelo caractere '+'). Esses
-# itens opcionais são os elementos da tupla "extras", o segundo parâmetro da
-# função.
-#
-# extras ~ (data, hora, prioridade, contexto, projeto)
-#
-# Qualquer elemento da tupla que contenha um string vazio ('') não
-# deve ser levado em consideração. 
 
 #FEITO-------------------------------------------------
 def adicionar(descricao, extras):
@@ -68,7 +50,7 @@ def adicionar(descricao, extras):
 
 #FEITO-----------------------------------
 def prioridadeValida(pri):
-  if len(pri) == 3 and pri[0] == '(' and 'a' <= pri[1] <= 'z' or 'A' <= pri[1] <= 'Z' and pri[2] == ')':
+  if len(pri) == 3 and pri[0] == '(' and 'A' <= pri[1] <= 'Z' and pri[2] == ')':
     return True
   else:
     return False
@@ -76,14 +58,13 @@ def prioridadeValida(pri):
 
 #FEITO------------------------------------
 def horaValida(horaMin):
-  if len(horaMin) == 4 and '0' <= horaMin[0] <= '2' and '0' <= horaMin[1] <= '3' and '0' <= horaMin[2] <= '5' and '0' <= horaMin[3] <= '9' and soDigitos(horaMin):
+  if len(horaMin) == 4 and soDigitos(horaMin) and int(horaMin[:2]) < 24 and int(horaMin[2:]) < 60: #USANDO SLICE FACILITA A COMPARAÇÃO 
     return True
   else:
     return False
-
 #FEITO--------------------------------------
 def dataValida(data):
-  if len(data) == 8:
+  if len(data) == 8 and soDigitos(data):
     dia = int(data[:2])
     mes = int(data[2:4])
     if mes == 2 and 0 < dia <= 29:
@@ -121,27 +102,10 @@ def soDigitos(numero):
       return False
   return True
 
-
-# Dadas as linhas de texto obtidas a partir do arquivo texto todo.txt, devolve
-# uma lista de tuplas contendo os pedaços de cada linha, conforme o seguinte
-# formato:
-#
-# (descrição, prioridade, (data, hora, contexto, projeto))
-#
-# É importante lembrar que linhas do arquivo todo.txt devem estar organizadas de acordo com o
-# seguinte formato:
-#
-# DDMMAAAA HHMM (P) DESC @CONTEXT +PROJ
-#
-# Todos os itens menos DESC são opcionais. Se qualquer um deles estiver fora do formato, por exemplo,
-# data que não tem todos os componentes ou prioridade com mais de um caractere (além dos parênteses),
-# tudo que vier depois será considerado parte da descrição.  
-
 #FEITO-------------------------------------------------------
 def organizar(linhas):
   global itens
   itens = []
-
   for l in linhas:
     data = '' 
     hora = ''
@@ -154,110 +118,238 @@ def organizar(linhas):
     tokens = l.split() # quebra o string em palavras
     if dataValida(tokens[0]):
       data = tokens.pop(0)
-      if horaValida(tokens[0]):
-        hora = tokens.pop(0)
-        if prioridadeValida(tokens[0]):
-          pri = tokens.pop(0)
-    elif horaValida(tokens[0]):
+    if horaValida(tokens[0]):
       hora = tokens.pop(0)
-      if prioridadeValida(tokens[0]):
-        pri = tokens.pop(0)
-    elif prioridadeValida(tokens[0]):
+    if prioridadeValida(tokens[0]):
       pri = tokens.pop(0)
     if projetoValido(tokens[-1]):
       projeto = tokens.pop()
-      if contextoValido(tokens[-1]):
-        contexto = tokens.pop()
-    elif contextoValido(tokens[-1]):
+    if contextoValido(tokens[-1]):
       contexto = tokens.pop()
     for i in tokens:
       desc += i + ' '
     itens.append((desc, (data, hora, pri, contexto, projeto)))
-
   return itens
 
-# Datas e horas são armazenadas nos formatos DDMMAAAA e HHMM, mas são exibidas
-# como se espera (com os separadores apropridados). 
-#
-# Uma extensão possível é listar com base em diversos critérios: (i) atividades com certa prioridade;
-# (ii) atividades a ser realizadas em certo contexto; (iii) atividades associadas com
-# determinado projeto; (vi) atividades de determinado dia (data específica, hoje ou amanhã). Isso não
-# é uma das tarefas básicas do projeto, porém. 
-def listar():
+def listar(var='n'):
+  try:
+    fp = open(TODO_FILE, 'r')
+    linhas = fp.readlines()
+    conteudo = organizar(linhas)
+    atividades = {}
+    conteudo = ordenarPorPrioridade(ordenarPorDataHora(conteudo))
+    for index in range(len(conteudo)):
+      atividades[index+1] = conteudo[index]
+    if var != 'n':
+      return atividades
+    listaAux, indices = [], []
+    for key,values in atividades.items():
+      a, at = 0, ''
+      indices.append(key)
+      while a != len(values[1]):
+        if values[1][a] != '':
+          at += values[1][a] + ' '
+        if a == 2:
+          at += values[0]
+        a += 1
+      atividades[key] = at
+    for keys, values in atividades.items():
+      if '(A)' in values:
+        print(keys,': ', end='')
+        printCores(values, RED)
+      elif '(B)' in values:
+        print(keys,': ', end='')
+        printCores(values, GREEN)
+      elif '(C)' in values:
+        print(keys,': ', end='')
+        printCores(values, YELLOW)
+      elif '(D)' in values:
+        print(keys,': ', end='')
+        printCores(values, BLUE)
+      else:
+        print(keys,':', values)
+    return atividades
+  except IOError:
+    print('Não foi possivel ler')
 
-  ################ COMPLETAR
-  return 
+def inverterData(data):
+  data = int(data[4:] + data[2:4] + data[:2])
+  return data
 
 def ordenarPorDataHora(itens):
+  semDatas, semHora = [], []
+  d,h = 0,0
+  
+  while d != len(itens): #REMOVE AS ATIVIDADES QUE NÃO TEM DATA PARA PODER INSERIR NO FINAL...
+    if itens[d][1][0] == '':
+      semDatas.append(itens.pop(d))
+      d -= 1
+    d += 1
+  while h != len(itens): #REMOVE AS ATIVIDADES QUE NÃO TEM HORA.., PARA PODER ADICIONAR AO FINAL..
+    if itens[h][1][1] == '':
+      semHora.append(itens.pop(h))
+      h -= 1
+    h += 1
+  for c in range(len(semDatas)):
+    for c1 in range(len(semDatas)):
+      if semDatas[c][1][1] != '' and semDatas[c1][1][1] != '':
+        if int(semDatas[c][1][1]) < int(semDatas[c1][1][1]):
+          aux = semDatas[c1]
+          semDatas[c1] = semDatas[c]
+          semDatas[c] = aux
 
-  ################ COMPLETAR
+  for h in range(len(semHora)): #INSERINDO NO FINAL AS ATIVIDADES QUE NAO TEM HORA
+    for h1 in range(len(semHora)):
+      if semHora[h][1][0] != '' and semHora[h1][1][0] != '':
+        if inverterData(semHora[h][1][0]) < inverterData(semHora[h1][1][0]):
+          aux = semHora[h1]
+          semHora[h1] = semHora[h]
+          semHora[h] = aux  
+  for a in range(len(itens)): #VEZES QUE O FOR VAI REPETIR
+    for b in range(len(itens)):
+      if inverterData(itens[a][1][0]) < inverterData(itens[b][1][0]): #COMPARA O PRIMEIRO COM O RESTO, E DEPOIS O PRÓXIMO COM O RESTO, E ASSIM VAI... 
+        aux = itens[b]
+        itens[b] = itens[a]
+        itens[a] = aux
+      elif inverterData(itens[a][1][0]) == inverterData(itens[b][1][0]): #SE AS DATAS FOREM IGUAIS, COMPARA AS HORAS...
+        if itens[a][1][1] != '' and itens[b][1][1] != '':
+          if int(itens[a][1][1]) < int(itens[b][1][1]):
+            aux = itens[b]
+            itens[b] = itens[a]
+            itens[a] = aux
+
+  for date in semHora:
+    itens.append(date)
+
+  for hour in semDatas:
+    itens.append(hour)
 
   return itens
    
 def ordenarPorPrioridade(itens):
-
-  ################ COMPLETAR
-
+  semPri = []
+  i = 0
+  while i != len(itens):
+    if itens[i][1][2] == '': #REMOVE OS ITENS QUE NÃO TEM PRIORIDADE...
+      semPri.append(itens.pop(i))
+      i -= 1
+    i += 1
+  for repeticoes in range(len(itens)):
+    for indices in range(len(itens)-1):
+      if itens[indices][1][2] > itens[indices+1][1][2]:
+        aux = itens[indices]
+        itens[indices] = itens[indices+1]
+        itens[indices+1] = aux
   return itens
 
 def fazer(num):
-
-  ################ COMPLETAR
-
-  return 
+  todo = open(TODO_FILE,'r')
+  linhas = todo.readlines()
+  todo.close()
+  variavel, verificador = listar('s'), False #{1: dsadasdas, 2:dsadasdas}
+  if num != 0 and num <= len(variavel):
+    for a in range(len(linhas)):
+      done = open(ARCHIVE_FILE, 'a')
+      if variavel[num] == organizar([linhas[a]])[0]:
+        done.write(linhas.pop(a))
+        verificador = True
+        break
+    done.close()
+    if verificador:
+      todo = open(TODO_FILE, 'w')
+      for i in linhas:
+          todo.write(i)
+      todo.close()
+  else:
+    print('Erro')
 
 def remover():
+  num = int(sys.argv[0])
+  fp = open(TODO_FILE, 'r')
+  linhas = fp.readlines()
+  fp.close()
+  variavel, verificador = listar('s'), False
+  if num != 0 and num <= len(variavel):
+    for a in range(len(linhas)):
+      if variavel[num] == organizar([linhas[a]])[0]:
+          linhas.pop(a)
+          verificador = True
+          break
+    if verificador:
+      fp = open(TODO_FILE, 'w')
+      for i in linhas:
+          fp.write(i)
+      fp.close()
+  else:
+    print('Erro')
 
-  ################ COMPLETAR
-
-  return
-
-# prioridade é uma letra entre A a Z, onde A é a mais alta e Z a mais baixa.
-# num é o número da atividade cuja prioridade se planeja modificar, conforme
-# exibido pelo comando 'l'. 
 def priorizar(num, prioridade):
+  todo = open(TODO_FILE, 'r')
+  linhas = todo.readlines()
+  todo.close()
+  pivo = listar('s') 
+  if int(num) == 0 or int(num) > len(pivo):
+    print('Indice errado.')
+  else:
+    var, verificador = list(pivo[int(num)][1]), False
+    pivoAux2 = [pivo[int(num)][:1] + (tuple(var),)]
+    var[2] = prioridade.upper()
+    pivoAux = [pivo[int(num)][:1] + (tuple(var),)]
+    atividade, atividadeAux = '', ''.strip()
+    a,b = 0,0
+    while a != len(pivoAux[0][1]):
+      if pivoAux[0][1][a] != '':
+        atividade += pivoAux[0][1][a] + ' '
+      if a == 3:
+        atividade += pivoAux[0][0] + ' '
+      a += 1
+    while b != len(pivoAux2[0][1]):
+      if pivoAux2[0][1][b] != '':
+        atividadeAux += pivoAux2[0][1][b] + ' '
+      if b == 3:
+        atividadeAux += pivoAux2[0][0] + ' '
+      b += 1
+    if int(num) != 0 and int(num) <= len(linhas):
+      for l in range(len(linhas)):
+        if pivoAux2[0] == organizar([linhas[l]])[0]:
+          index = linhas.index(linhas[l])
+          linhas.pop(l)
+          linhas.append(atividade + '\n')
+          break
+      todo = open(TODO_FILE, 'w')
+      for i in linhas:
+        todo.write(i)
+      todo.close()
 
-  ################ COMPLETAR
-
-  return 
-
-
-
-# Esta função processa os comandos e informações passados através da linha de comando e identifica
-# que função do programa deve ser invocada. Por exemplo, se o comando 'adicionar' foi usado,
-# isso significa que a função adicionar() deve ser invocada para registrar a nova atividade.
-# O bloco principal fica responsável também por tirar espaços em branco no início e fim dos strings
-# usando o método strip(). Além disso, realiza a validação de horas, datas, prioridades, contextos e
-# projetos. 
 def processarComandos(comandos) :
 
   if comandos[1] == ADICIONAR:
     comandos.pop(0) # remove 'agenda.py'
     comandos.pop(0) # remove 'adicionar'
     itemParaAdicionar = organizar([' '.join(comandos)])[0]
-    # itemParaAdicionar = (descricao, (prioridade, data, hora, contexto, projeto))
     adicionar(itemParaAdicionar[0], itemParaAdicionar[1]) # novos itens não têm prioridade
 
   elif comandos[1] == LISTAR:
-    comandos.pop(0)
-    comandos.pop(0)
+    listar()
     return    
-    ################ COMPLETAR
 
   elif comandos[1] == REMOVER:
+    comandos.pop(0)
+    comandos.pop(0)
+    remover()
     return    
-
-    ################ COMPLETAR    
-
   elif comandos[1] == FAZER:
+    comandos.pop(0)
+    comandos.pop(0)
+    num = int(sys.argv[0])
+    fazer(num)
     return
 
-    ################ COMPLETAR
-
   elif comandos[1] == PRIORIZAR:
+    comandos.pop(0)
+    comandos.pop(0)
+    priorizar(comandos[0], comandos[1])
     return    
-
-    ################ COMPLETAR
 
   else :
     print("Comando inválido.")
