@@ -142,13 +142,16 @@ def listar(var='n'):
       atividades[index+1] = conteudo[index]
     if var != 'n':
       return atividades
-    listaAux, indices = [], []
     for key,values in atividades.items():
       a, at = 0, ''
-      indices.append(key)
       while a != len(values[1]):
         if values[1][a] != '':
-          at += values[1][a] + ' '
+          if dataValida(values[1][a]):
+            at += values[1][a][:2] + '/' + values[1][a][2:4] + '/' + values[1][a][4:] + ' '
+          elif horaValida(values[1][a]):
+            at += values[1][a][:2] + 'h' + values[1][a][2:4] + 'm' + values[1][a][4:] + ' '
+          else:
+            at += values[1][a] + ' '
         if a == 2:
           at += values[0]
         a += 1
@@ -168,7 +171,6 @@ def listar(var='n'):
         printCores(values, BLUE)
       else:
         print(keys,':', values)
-    return atividades
   except IOError:
     print('Não foi possivel ler')
 
@@ -240,6 +242,7 @@ def ordenarPorPrioridade(itens):
         aux = itens[indices]
         itens[indices] = itens[indices+1]
         itens[indices+1] = aux
+
   return itens
 
 def fazer(num):
