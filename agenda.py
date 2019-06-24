@@ -157,16 +157,16 @@ def listar(var='n'):
         a += 1
       atividades[key] = at
     for keys, values in atividades.items():
-      if '(A)' in values:
+      if '(A)' in values and conteudo[keys-1][1][2] == '(A)':
         print(keys,': ', end='')
         printCores(values, RED)
-      elif '(B)' in values:
+      elif '(B)' in values and conteudo[keys-1][1][2] == '(B)':
         print(keys,': ', end='')
         printCores(values, GREEN)
-      elif '(C)' in values:
+      elif '(C)' in values and conteudo[keys-1][1][2] == '(C)':
         print(keys,': ', end='')
         printCores(values, YELLOW)
-      elif '(D)' in values:
+      elif '(D)' in values and conteudo[keys-1][1][2] == '(D)':
         print(keys,': ', end='')
         printCores(values, BLUE)
       else:
@@ -251,41 +251,47 @@ def fazer(num):
   linhas = todo.readlines()
   todo.close()
   variavel, verificador = listar('s'), False #{1: dsadasdas, 2:dsadasdas}
-  if num != 0 and num <= len(variavel):
-    for a in range(len(linhas)):
-      done = open(ARCHIVE_FILE, 'a')
-      if variavel[num] == organizar([linhas[a]])[0]:
-        done.write(linhas.pop(a))
-        verificador = True
-        break
-    done.close()
-    if verificador:
-      todo = open(TODO_FILE, 'w')
-      for i in linhas:
-          todo.write(i)
-      todo.close()
+  if num < 0:
+    print('O número precisa ser um valor positivo')
   else:
-    print('Erro')
+    if num != 0 and num <= len(variavel):
+      for a in range(len(linhas)):
+        done = open(ARCHIVE_FILE, 'a')
+        if variavel[num] == organizar([linhas[a]])[0]:
+          done.write(linhas.pop(a))
+          verificador = True
+          break
+      done.close()
+      if verificador:
+        todo = open(TODO_FILE, 'w')
+        for i in linhas:
+            todo.write(i)
+        todo.close()
+    else:
+      print('Erro')
 
 def remover():
-  num = int(sys.argv[0])
   fp = open(TODO_FILE, 'r')
   linhas = fp.readlines()
   fp.close()
   variavel, verificador = listar('s'), False
-  if num != 0 and num <= len(variavel):
-    for a in range(len(linhas)):
-      if variavel[num] == organizar([linhas[a]])[0]:
-          linhas.pop(a)
-          verificador = True
-          break
-    if verificador:
-      fp = open(TODO_FILE, 'w')
-      for i in linhas:
-          fp.write(i)
-      fp.close()
-  else:
-    print('Erro')
+  try:
+    num = int(sys.argv[0])
+    if num != 0 and num <= len(variavel):
+      for a in range(len(linhas)):
+        if variavel[num] == organizar([linhas[a]])[0]:
+            linhas.pop(a)
+            verificador = True
+            break
+      if verificador:
+        fp = open(TODO_FILE, 'w')
+        for i in linhas:
+            fp.write(i)
+        fp.close()
+    else:
+      print('Erro')
+  except ValueError:
+    print('Index precisa ser um inteiro')
 
 def priorizar(num, prioridade):
   todo = open(TODO_FILE, 'r')
