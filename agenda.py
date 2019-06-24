@@ -242,7 +242,8 @@ def ordenarPorPrioridade(itens):
         aux = itens[indices]
         itens[indices] = itens[indices+1]
         itens[indices+1] = aux
-
+  for s in semPri:
+    itens.append(s)
   return itens
 
 def fazer(num):
