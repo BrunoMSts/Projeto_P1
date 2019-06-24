@@ -120,8 +120,8 @@ def organizar(linhas):
       data = tokens.pop(0)
     if horaValida(tokens[0]):
       hora = tokens.pop(0)
-    if prioridadeValida(tokens[0]):
-      pri = tokens.pop(0)
+    if prioridadeValida(tokens[0].upper()):
+      pri = tokens.pop(0).upper()
     if projetoValido(tokens[-1]):
       projeto = tokens.pop()
     if contextoValido(tokens[-1]):
@@ -172,7 +172,7 @@ def listar(var='n'):
       else:
         print(keys,':', values)
   except IOError:
-    print('Não foi possivel ler')
+    print('Não possui nenhuma atividade registrada!')
 
 def inverterData(data):
   data = int(data[4:] + data[2:4] + data[:2])
@@ -289,7 +289,7 @@ def remover():
             fp.write(i)
         fp.close()
     else:
-      print('Erro')
+      print('ERRO, você ja removeu todas as atividades!')
   except ValueError:
     print('Index precisa ser um inteiro')
 
@@ -299,7 +299,7 @@ def priorizar(num, prioridade):
   todo.close()
   pivo = listar('s') 
   if int(num) == 0 or int(num) > len(pivo):
-    print('Indice errado.')
+    print('Você não pode priorizar um item que você não adicionou!')
   else:
     var, verificador = list(pivo[int(num)][1]), False
     pivoAux2 = [pivo[int(num)][:1] + (tuple(var),)]
